@@ -102,7 +102,7 @@ def reservations():
                 if "endDateTime" not in r and "end_time" in r:
                     r["endDateTime"] = r["end_time"].isoformat()
 
-            return jsonify(reservations), 200
+            return jsonify({"reservations": reservations}), 200
         elif request.method == "DELETE":
             result = reservations_col.delete_many({})
             return (

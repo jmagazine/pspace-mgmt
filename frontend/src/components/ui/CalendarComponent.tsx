@@ -32,7 +32,6 @@ const CalendarComponent = (props: CalendarComponentProps) => {
   const [view, setView] = useState<"weekly" | "monthly">("monthly");
   const [showModal, setShowModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const reservations = props.reservations || [];
   const [formData, setFormData] = useState<ReservationFormData>({
     reserver: "",
     startTime: "",
@@ -155,12 +154,17 @@ const CalendarComponent = (props: CalendarComponentProps) => {
     return new Date(`${dateStr}T${time}:00`).toISOString();
   };
 
-  const getDateFromISO = (isoString: string) => {
-    return new Date(isoString);
-  };
-
   const getTimeFromISO = (isoString: string) => {
     return new Date(isoString).toTimeString().slice(0, 5);
+  };
+
+  const getTimeFromISOAs12Hour = (isoString: string) => {
+    const time24 = getTimeFromISO(isoString);
+    const [hours, minutes] = time24.split(":");
+    const hour = parseInt(hours, 10);
+    const ampm = hour >= 12 ? "PM" : "AM";
+    const hour12 = hour % 12 || 12;
+    return `${hour12}:${minutes} ${ampm}`;
   };
 
   const formatDate = (date: Date) => {
@@ -201,8 +205,16 @@ const CalendarComponent = (props: CalendarComponentProps) => {
     const endDateTime = createDateTimeISO(date, endTime);
 
     const dayReservations = props.reservations.filter((res) => {
-      const resDate = getDateFromISO(res.startDateTime);
-      return formatDate(resDate) === formatDate(date) && res._id !== excludeId;
+      // Handle different date formats - your backend returns without .000Z
+      let dateTimeString = res.startDateTime;
+      if (!dateTimeString.includes("Z") && !dateTimeString.includes("+")) {
+        dateTimeString += "Z"; // Add UTC indicator if missing
+      }
+      const resDate = new Date(dateTimeString);
+      return (
+        formatDate(resDate) === formatDate(date) &&
+        (res._id || res.id) !== excludeId
+      );
     });
 
     for (const reservation of dayReservations) {
@@ -371,7 +383,7 @@ const CalendarComponent = (props: CalendarComponentProps) => {
         selectedDate,
         startTime,
         endTime,
-        editingReservation?._id
+        editingReservation?._id || editingReservation?.id
       )
     ) {
       return {
@@ -403,7 +415,7 @@ const CalendarComponent = (props: CalendarComponentProps) => {
     endDateTime.setHours(23, 59, 59, 999);
 
     if (editingReservation) {
-      // For editing, send PUT request to backend
+      // For editing, send POST request to backend with updated data
       const updatedReservation = {
         startDateTime: createDateTimeISO(selectedDate!, formData.startTime),
         endDateTime: createDateTimeISO(selectedDate!, formData.endTime),
@@ -413,7 +425,7 @@ const CalendarComponent = (props: CalendarComponentProps) => {
 
       fetch(
         `${import.meta.env.VITE_API_URL}/api/reservations/${
-          editingReservation._id
+          editingReservation._id || editingReservation.id
         }`,
         {
           method: "PUT",
@@ -476,7 +488,10 @@ const CalendarComponent = (props: CalendarComponentProps) => {
   };
 
   const handleDeleteReservation = () => {
-    if (editingReservation && editingReservation._id) {
+    if (
+      editingReservation &&
+      (editingReservation._id || editingReservation.id)
+    ) {
       // Get current view date range for refreshing
       const { startDate, endDate } = getCurrentViewDateRange();
       const startDateTime = new Date(startDate);
@@ -486,7 +501,7 @@ const CalendarComponent = (props: CalendarComponentProps) => {
 
       fetch(
         `${import.meta.env.VITE_API_URL}/api/reservations/${
-          editingReservation._id
+          editingReservation._id || editingReservation.id
         }`,
         {
           method: "DELETE",
@@ -552,7 +567,7 @@ const CalendarComponent = (props: CalendarComponentProps) => {
                     .slice(0, 2)
                     .map((reservation) => (
                       <div
-                        key={reservation._id}
+                        key={reservation._id || reservation.id}
                         className={`text-xs px-1 py-0.5 rounded truncate cursor-pointer transition-colors ${
                           (reservation.createdBy || reservation.created_by) ===
                           currentUser
@@ -570,7 +585,7 @@ const CalendarComponent = (props: CalendarComponentProps) => {
                             : "Reserved by someone else"
                         }
                       >
-                        {getTimeFromISO(reservation.startDateTime)} -{" "}
+                        {getTimeFromISOAs12Hour(reservation.startDateTime)} -{" "}
                         {reservation.reserver || reservation.owner}
                       </div>
                     ))}
@@ -614,7 +629,7 @@ const CalendarComponent = (props: CalendarComponentProps) => {
               <div className="space-y-2">
                 {getReservationsForDate(date).map((reservation) => (
                   <div
-                    key={reservation._id}
+                    key={reservation._id || reservation.id}
                     className={`text-xs px-2 py-1 rounded cursor-pointer transition-colors ${
                       (reservation.createdBy || reservation.created_by) ===
                       currentUser
@@ -633,8 +648,8 @@ const CalendarComponent = (props: CalendarComponentProps) => {
                     }
                   >
                     <div className="font-medium">
-                      {getTimeFromISO(reservation.startDateTime)} -{" "}
-                      {getTimeFromISO(reservation.endDateTime)}
+                      {getTimeFromISOAs12Hour(reservation.startDateTime)} -{" "}
+                      {getTimeFromISOAs12Hour(reservation.endDateTime)}
                     </div>
                     <div className="truncate">
                       {reservation.reserver || reservation.owner}

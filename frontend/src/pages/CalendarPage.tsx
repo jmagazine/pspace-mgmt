@@ -16,7 +16,17 @@ const CalendarPage = () => {
     );
     const data = await response.json();
     console.log(data);
-    setReservations(data["reservations"] || []);
+
+    // Sort reservations by start time
+    const sortedReservations = (data["reservations"] || []).sort(
+      (a: Reservation, b: Reservation) => {
+        const dateA = new Date(a.startDateTime);
+        const dateB = new Date(b.startDateTime);
+        return dateA.getTime() - dateB.getTime();
+      }
+    );
+
+    setReservations(sortedReservations);
   };
 
   return (
