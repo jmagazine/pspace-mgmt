@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   ChevronLeft,
   ChevronRight,
@@ -7,15 +7,7 @@ import {
   User,
   X,
 } from "lucide-react";
-
-interface Reservation {
-  id: string;
-  date: string;
-  reserver: string;
-  startTime: string;
-  endTime: string;
-  createdBy: string;
-}
+import type { Reservation } from "@/reservation/Reservation";
 
 interface ReservationFormData {
   reserver: string;
@@ -23,12 +15,24 @@ interface ReservationFormData {
   endTime: string;
 }
 
-const CalendarComponent: React.FC = () => {
+interface CalendarComponentProps {
+  reservations: Reservation[];
+  updateReservations: (startDateTime: any, endDateTime: any) => void;
+}
+
+const CalendarComponent = (props: CalendarComponentProps) => {
+  // Debug logging - remove this after fixing
+  console.log("CalendarComponent props.reservations:", props.reservations);
+  console.log("Number of reservations:", props.reservations?.length || 0);
+  if (props.reservations?.length > 0) {
+    console.log("Sample reservation:", props.reservations[0]);
+  }
+
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<"weekly" | "monthly">("monthly");
   const [showModal, setShowModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [reservations, setReservations] = useState<Reservation[]>([]);
+  const reservations = props.reservations || [];
   const [formData, setFormData] = useState<ReservationFormData>({
     reserver: "",
     startTime: "",
@@ -37,6 +41,8 @@ const CalendarComponent: React.FC = () => {
   const [formError, setFormError] = useState("");
   const [editingReservation, setEditingReservation] =
     useState<Reservation | null>(null);
+
+  //TODO: Check google oauth principal
   const [currentUser] = useState("current_user");
 
   const monthNames = [
@@ -55,6 +61,58 @@ const CalendarComponent: React.FC = () => {
   ];
 
   const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+  // Helper function to get the date range for the current view
+  const getCurrentViewDateRange = () => {
+    if (view === "monthly") {
+      const year = currentDate.getFullYear();
+      const month = currentDate.getMonth();
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
+
+      // Include the full weeks that contain the first and last days of the month
+      const startOfWeek = new Date(firstDay);
+      startOfWeek.setDate(firstDay.getDate() - firstDay.getDay());
+
+      const endOfWeek = new Date(lastDay);
+      endOfWeek.setDate(lastDay.getDate() + (6 - lastDay.getDay()));
+
+      return {
+        startDate: startOfWeek,
+        endDate: endOfWeek,
+      };
+    } else {
+      // Weekly view
+      const startOfWeek = new Date(currentDate);
+      const day = startOfWeek.getDay();
+      startOfWeek.setDate(startOfWeek.getDate() - day);
+
+      const endOfWeek = new Date(startOfWeek);
+      endOfWeek.setDate(startOfWeek.getDate() + 6);
+
+      return {
+        startDate: startOfWeek,
+        endDate: endOfWeek,
+      };
+    }
+  };
+
+  // Call updateReservations when the view or date changes
+  useEffect(() => {
+    const { startDate, endDate } = getCurrentViewDateRange();
+
+    // Set time to start of day for startDate and end of day for endDate
+    const startDateTime = new Date(startDate);
+    startDateTime.setHours(0, 0, 0, 0);
+
+    const endDateTime = new Date(endDate);
+    endDateTime.setHours(23, 59, 59, 999);
+
+    props.updateReservations(
+      startDateTime.toISOString(),
+      endDateTime.toISOString()
+    );
+  }, [currentDate, view]);
 
   const getDaysInMonth = (date: Date) => {
     const year = date.getFullYear();
@@ -92,6 +150,19 @@ const CalendarComponent: React.FC = () => {
     return weekDays;
   };
 
+  const createDateTimeISO = (date: Date, time: string) => {
+    const dateStr = formatDate(date);
+    return new Date(`${dateStr}T${time}:00`).toISOString();
+  };
+
+  const getDateFromISO = (isoString: string) => {
+    return new Date(isoString);
+  };
+
+  const getTimeFromISO = (isoString: string) => {
+    return new Date(isoString).toTimeString().slice(0, 5);
+  };
+
   const formatDate = (date: Date) => {
     return date.toISOString().split("T")[0];
   };
@@ -126,16 +197,19 @@ const CalendarComponent: React.FC = () => {
     endTime: string,
     excludeId?: string
   ) => {
-    const dateStr = formatDate(date);
-    const dayReservations = reservations.filter(
-      (res) => res.date === dateStr && res.id !== excludeId
-    );
+    const startDateTime = createDateTimeISO(date, startTime);
+    const endDateTime = createDateTimeISO(date, endTime);
+
+    const dayReservations = props.reservations.filter((res) => {
+      const resDate = getDateFromISO(res.startDateTime);
+      return formatDate(resDate) === formatDate(date) && res._id !== excludeId;
+    });
 
     for (const reservation of dayReservations) {
-      const existingStart = reservation.startTime;
-      const existingEnd = reservation.endTime;
+      const existingStart = reservation.startDateTime;
+      const existingEnd = reservation.endDateTime;
 
-      if (startTime < existingEnd && endTime > existingStart) {
+      if (startDateTime < existingEnd && endDateTime > existingStart) {
         return true;
       }
     }
@@ -144,8 +218,58 @@ const CalendarComponent: React.FC = () => {
   };
 
   const getReservationsForDate = (date: Date) => {
-    return reservations.filter((res) => res.date === formatDate(date));
+    // Debug logging - remove this after fixing
+    console.log("Total reservations:", props.reservations.length);
+    console.log("Filtering for date:", formatDate(date));
+
+    const filtered = props.reservations.filter((res) => {
+      // Handle different date formats - your backend returns without .000Z
+      let dateTimeString = res.startDateTime;
+      if (!dateTimeString.includes("Z") && !dateTimeString.includes("+")) {
+        dateTimeString += "Z"; // Add UTC indicator if missing
+      }
+
+      const resDate = new Date(dateTimeString);
+      const resDateFormatted = formatDate(resDate);
+      const targetDateFormatted = formatDate(date);
+
+      console.log(
+        "Reservation:",
+        res.startDateTime,
+        "-> formatted:",
+        resDateFormatted
+      );
+      console.log("Target date formatted:", targetDateFormatted);
+      console.log("Match:", resDateFormatted === targetDateFormatted);
+
+      return resDateFormatted === targetDateFormatted;
+    });
+
+    console.log(
+      `Found ${filtered.length} reservations for ${formatDate(date)}`
+    );
+    return filtered;
   };
+
+  // Alternative timezone-safe version (uncomment if above doesn't work)
+  // const getReservationsForDate = (date: Date) => {
+  //   return props.reservations.filter((res) => {
+  //     const resDate = new Date(res.startDateTime);
+  //
+  //     // Compare year, month, and day directly to avoid timezone issues
+  //     return (
+  //       resDate.getFullYear() === date.getFullYear() &&
+  //       resDate.getMonth() === date.getMonth() &&
+  //       resDate.getDate() === date.getDate()
+  //     );
+  //   });
+  // };
+
+  // Temporary test function - uncomment this to show all reservations on every date for testing
+  // const getReservationsForDate = (date: Date) => {
+  //   console.log('TEST MODE: Showing all reservations on every date');
+  //   return props.reservations;
+  // };
 
   const navigateMonth = (direction: "prev" | "next") => {
     setCurrentDate((prev) => {
@@ -180,13 +304,14 @@ const CalendarComponent: React.FC = () => {
   };
 
   const handleReservationClick = (reservation: Reservation, date: Date) => {
-    if (reservation.createdBy === currentUser) {
+    const userField = reservation.createdBy || reservation.created_by;
+    if (userField === currentUser) {
       setSelectedDate(date);
       setEditingReservation(reservation);
       setFormData({
-        reserver: reservation.reserver,
-        startTime: reservation.startTime,
-        endTime: reservation.endTime,
+        reserver: reservation.reserver || reservation.owner || "",
+        startTime: getTimeFromISO(reservation.startDateTime),
+        endTime: getTimeFromISO(reservation.endDateTime),
       });
       setShowModal(true);
       setFormError("");
@@ -246,7 +371,7 @@ const CalendarComponent: React.FC = () => {
         selectedDate,
         startTime,
         endTime,
-        editingReservation?.id
+        editingReservation?._id
       )
     ) {
       return {
@@ -270,29 +395,78 @@ const CalendarComponent: React.FC = () => {
       return;
     }
 
+    // Get current view date range for refreshing
+    const { startDate, endDate } = getCurrentViewDateRange();
+    const startDateTime = new Date(startDate);
+    startDateTime.setHours(0, 0, 0, 0);
+    const endDateTime = new Date(endDate);
+    endDateTime.setHours(23, 59, 59, 999);
+
     if (editingReservation) {
-      setReservations((prev) =>
-        prev.map((res) =>
-          res.id === editingReservation.id
-            ? {
-                ...res,
-                reserver: formData.reserver.trim(),
-                startTime: formData.startTime,
-                endTime: formData.endTime,
-              }
-            : res
-        )
-      );
-    } else {
-      const newReservation: Reservation = {
-        id: Date.now().toString(),
-        date: formatDate(selectedDate!),
+      // For editing, send PUT request to backend
+      const updatedReservation = {
+        startDateTime: createDateTimeISO(selectedDate!, formData.startTime),
+        endDateTime: createDateTimeISO(selectedDate!, formData.endTime),
         reserver: formData.reserver.trim(),
-        startTime: formData.startTime,
-        endTime: formData.endTime,
         createdBy: currentUser,
       };
-      setReservations((prev) => [...prev, newReservation]);
+
+      fetch(
+        `${import.meta.env.VITE_API_URL}/api/reservations/${
+          editingReservation._id
+        }`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(updatedReservation),
+        }
+      )
+        .then((response) => response.json())
+        .then((data) => {
+          console.log("Reservation updated:", data);
+          // Refresh reservations for current view
+          props.updateReservations(
+            startDateTime.toISOString(),
+            endDateTime.toISOString()
+          );
+        })
+        .catch((error) => {
+          console.error("Error updating reservation:", error);
+          setFormError("Failed to update reservation. Please try again.");
+          return;
+        });
+    } else {
+      // For creating, let backend generate the ID
+      const newReservation = {
+        startDateTime: createDateTimeISO(selectedDate!, formData.startTime),
+        endDateTime: createDateTimeISO(selectedDate!, formData.endTime),
+        reserver: formData.reserver.trim(),
+        createdBy: currentUser,
+      };
+
+      fetch(`${import.meta.env.VITE_API_URL}/api/reservations`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newReservation),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          console.log("Reservation created:", data);
+          // Refresh reservations for current view
+          props.updateReservations(
+            startDateTime.toISOString(),
+            endDateTime.toISOString()
+          );
+        })
+        .catch((error) => {
+          console.error("Error creating reservation:", error);
+          setFormError("Failed to create reservation. Please try again.");
+          return;
+        });
     }
 
     setShowModal(false);
@@ -302,10 +476,36 @@ const CalendarComponent: React.FC = () => {
   };
 
   const handleDeleteReservation = () => {
-    if (editingReservation) {
-      setReservations((prev) =>
-        prev.filter((res) => res.id !== editingReservation.id)
-      );
+    if (editingReservation && editingReservation._id) {
+      // Get current view date range for refreshing
+      const { startDate, endDate } = getCurrentViewDateRange();
+      const startDateTime = new Date(startDate);
+      startDateTime.setHours(0, 0, 0, 0);
+      const endDateTime = new Date(endDate);
+      endDateTime.setHours(23, 59, 59, 999);
+
+      fetch(
+        `${import.meta.env.VITE_API_URL}/api/reservations/${
+          editingReservation._id
+        }`,
+        {
+          method: "DELETE",
+        }
+      )
+        .then(() => {
+          console.log("Reservation deleted");
+          // Refresh reservations for current view
+          props.updateReservations(
+            startDateTime.toISOString(),
+            endDateTime.toISOString()
+          );
+        })
+        .catch((error) => {
+          console.error("Error deleting reservation:", error);
+          setFormError("Failed to delete reservation. Please try again.");
+          return;
+        });
+
       setShowModal(false);
       setEditingReservation(null);
       setFormData({ reserver: "", startTime: "", endTime: "" });
@@ -352,9 +552,10 @@ const CalendarComponent: React.FC = () => {
                     .slice(0, 2)
                     .map((reservation) => (
                       <div
-                        key={reservation.id}
+                        key={reservation._id}
                         className={`text-xs px-1 py-0.5 rounded truncate cursor-pointer transition-colors ${
-                          reservation.createdBy === currentUser
+                          (reservation.createdBy || reservation.created_by) ===
+                          currentUser
                             ? "bg-green-200 text-green-800 hover:bg-green-300"
                             : "bg-blue-200 text-blue-800"
                         }`}
@@ -363,12 +564,14 @@ const CalendarComponent: React.FC = () => {
                           handleReservationClick(reservation, date);
                         }}
                         title={
-                          reservation.createdBy === currentUser
+                          (reservation.createdBy || reservation.created_by) ===
+                          currentUser
                             ? "Click to edit (your reservation)"
                             : "Reserved by someone else"
                         }
                       >
-                        {reservation.startTime} - {reservation.reserver}
+                        {getTimeFromISO(reservation.startDateTime)} -{" "}
+                        {reservation.reserver || reservation.owner}
                       </div>
                     ))}
                   {getReservationsForDate(date).length > 2 && (
@@ -411,9 +614,10 @@ const CalendarComponent: React.FC = () => {
               <div className="space-y-2">
                 {getReservationsForDate(date).map((reservation) => (
                   <div
-                    key={reservation.id}
+                    key={reservation._id}
                     className={`text-xs px-2 py-1 rounded cursor-pointer transition-colors ${
-                      reservation.createdBy === currentUser
+                      (reservation.createdBy || reservation.created_by) ===
+                      currentUser
                         ? "bg-green-200 text-green-800 hover:bg-green-300"
                         : "bg-blue-200 text-blue-800"
                     }`}
@@ -422,15 +626,19 @@ const CalendarComponent: React.FC = () => {
                       handleReservationClick(reservation, date);
                     }}
                     title={
-                      reservation.createdBy === currentUser
+                      (reservation.createdBy || reservation.created_by) ===
+                      currentUser
                         ? "Click to edit (your reservation)"
                         : "Reserved by someone else"
                     }
                   >
                     <div className="font-medium">
-                      {reservation.startTime} - {reservation.endTime}
+                      {getTimeFromISO(reservation.startDateTime)} -{" "}
+                      {getTimeFromISO(reservation.endDateTime)}
                     </div>
-                    <div className="truncate">{reservation.reserver}</div>
+                    <div className="truncate">
+                      {reservation.reserver || reservation.owner}
+                    </div>
                   </div>
                 ))}
               </div>
