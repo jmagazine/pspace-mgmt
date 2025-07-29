@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   ChevronLeft,
   ChevronRight,
@@ -8,6 +8,7 @@ import {
   X,
 } from "lucide-react";
 import type { Reservation } from "@/reservation/Reservation";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface ReservationFormData {
   reserver: string;
@@ -41,8 +42,8 @@ const CalendarComponent = (props: CalendarComponentProps) => {
   const [editingReservation, setEditingReservation] =
     useState<Reservation | null>(null);
 
-  //TODO: Check google oauth principal
-  const [currentUser] = useState("current_user");
+  const { user } = useAuth();
+  const currentUser = user?.uid || "";
 
   const monthNames = [
     "January",
