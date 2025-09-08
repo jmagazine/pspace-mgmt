@@ -4,15 +4,15 @@ from .db import db
 from bson.objectid import ObjectId
 
 # Add the /api prefix to match frontend calls
-main = Blueprint("main", __name__, url_prefix="/api")
+api = Blueprint("api", __name__, url_prefix="/api")
 
 
-@main.route("/")
+@api.route("/")
 def index():
     return "Welcome to the Reservation System"
 
 
-@main.route("/dummy", methods=["post"])
+@api.route("/dummy", methods=["post"])
 def dummy():
 
     dummy_data = {
@@ -32,7 +32,7 @@ def dummy():
         return jsonify({"error": str(e)}), 400
 
 
-@main.route("/reservations", methods=["GET", "POST", "DELETE"])
+@api.route("/reservations", methods=["GET", "POST", "DELETE"])
 def reservations():
     reservations_col = db["reservations"]
 
@@ -113,7 +113,7 @@ def reservations():
         return jsonify({"error": str(e)}), 400
 
 
-@main.route("/reservations/<reservation_id>", methods=["PUT", "DELETE"])
+@api.route("/reservations/<reservation_id>", methods=["PUT", "DELETE"])
 def reservation_detail(reservation_id):
     reservations_col = db["reservations"]
 

@@ -110,7 +110,7 @@ const CalendarComponent = (props: CalendarComponentProps) => {
 
     props.updateReservations(
       startDateTime.toISOString(),
-      endDateTime.toISOString()
+      endDateTime.toISOString(),
     );
   }, [currentDate, view]);
 
@@ -190,7 +190,7 @@ const CalendarComponent = (props: CalendarComponentProps) => {
   const isTimeInValidRange = (
     date: Date,
     startTime: string,
-    endTime: string
+    endTime: string,
   ) => {
     const { min, max } = getValidHoursForDate(date);
     return startTime >= min && endTime <= max;
@@ -200,7 +200,7 @@ const CalendarComponent = (props: CalendarComponentProps) => {
     date: Date,
     startTime: string,
     endTime: string,
-    excludeId?: string
+    excludeId?: string,
   ) => {
     const startDateTime = createDateTimeISO(date, startTime);
     const endDateTime = createDateTimeISO(date, endTime);
@@ -250,7 +250,7 @@ const CalendarComponent = (props: CalendarComponentProps) => {
         "Reservation:",
         res.startDateTime,
         "-> formatted:",
-        resDateFormatted
+        resDateFormatted,
       );
       console.log("Target date formatted:", targetDateFormatted);
       console.log("Match:", resDateFormatted === targetDateFormatted);
@@ -259,7 +259,7 @@ const CalendarComponent = (props: CalendarComponentProps) => {
     });
 
     console.log(
-      `Found ${filtered.length} reservations for ${formatDate(date)}`
+      `Found ${filtered.length} reservations for ${formatDate(date)}`,
     );
     return filtered;
   };
@@ -384,7 +384,7 @@ const CalendarComponent = (props: CalendarComponentProps) => {
         selectedDate,
         startTime,
         endTime,
-        editingReservation?._id || editingReservation?.id
+        editingReservation?._id || editingReservation?.id,
       )
     ) {
       return {
@@ -434,7 +434,7 @@ const CalendarComponent = (props: CalendarComponentProps) => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify(updatedReservation),
-        }
+        },
       )
         .then((response) => response.json())
         .then((data) => {
@@ -442,7 +442,7 @@ const CalendarComponent = (props: CalendarComponentProps) => {
           // Refresh reservations for current view
           props.updateReservations(
             startDateTime.toISOString(),
-            endDateTime.toISOString()
+            endDateTime.toISOString(),
           );
         })
         .catch((error) => {
@@ -472,7 +472,7 @@ const CalendarComponent = (props: CalendarComponentProps) => {
           // Refresh reservations for current view
           props.updateReservations(
             startDateTime.toISOString(),
-            endDateTime.toISOString()
+            endDateTime.toISOString(),
           );
         })
         .catch((error) => {
@@ -506,14 +506,14 @@ const CalendarComponent = (props: CalendarComponentProps) => {
         }`,
         {
           method: "DELETE",
-        }
+        },
       )
         .then(() => {
           console.log("Reservation deleted");
           // Refresh reservations for current view
           props.updateReservations(
             startDateTime.toISOString(),
-            endDateTime.toISOString()
+            endDateTime.toISOString(),
           );
         })
         .catch((error) => {

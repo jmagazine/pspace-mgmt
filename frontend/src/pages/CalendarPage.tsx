@@ -11,12 +11,12 @@ const CalendarPage = () => {
 
   const updateReservations = async (
     startDateTime: string,
-    endDateTime: string
+    endDateTime: string,
   ) => {
     const response = await fetch(
       `${
         import.meta.env.VITE_API_URL
-      }/api/reservations?start=${startDateTime}&end=${endDateTime}`
+      }/api/reservations?start=${startDateTime}&end=${endDateTime}`,
     );
     const data = await response.json();
     console.log(data);
@@ -27,7 +27,7 @@ const CalendarPage = () => {
         const dateA = new Date(a.startDateTime);
         const dateB = new Date(b.startDateTime);
         return dateA.getTime() - dateB.getTime();
-      }
+      },
     );
 
     setReservations(sortedReservations);

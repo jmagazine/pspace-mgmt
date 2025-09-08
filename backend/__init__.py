@@ -11,8 +11,8 @@ def create_app():
     app.debug = True
 
     # Register blueprints
-    from .routes import main
+    from .routes import api
 
-    app.register_blueprint(main)
+    app.register_blueprint(api)
 
     return app

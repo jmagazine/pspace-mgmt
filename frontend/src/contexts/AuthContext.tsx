@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import {
-  signInWithRedirect,
+  signInWithPopup,
   signOut,
   onAuthStateChanged,
   getRedirectResult,
@@ -55,7 +55,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           setUser(null);
         }
         setIsLoading(false);
-      }
+      },
     );
 
     // Check for redirect result on app load
@@ -75,7 +75,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = async (): Promise<void> => {
     try {
-      await signInWithRedirect(auth, googleProvider);
+      await signInWithPopup(auth, googleProvider);
     } catch (error) {
       console.error("Error signing in with Google:", error);
       throw error;
