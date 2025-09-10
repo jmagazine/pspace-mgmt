@@ -12,6 +12,7 @@ interface User {
   uid: string;
   displayName: string;
   email: string;
+  photoURL?: string;
 }
 
 interface AuthContextType {
@@ -49,6 +50,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             uid: firebaseUser.uid,
             displayName: firebaseUser.displayName || "Unknown User",
             email: firebaseUser.email || "",
+            photoURL: firebaseUser.photoURL || undefined,
           };
           setUser(userData);
         } else {

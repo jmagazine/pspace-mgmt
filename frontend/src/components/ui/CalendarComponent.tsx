@@ -92,8 +92,7 @@ const CalendarComponent = (props: CalendarComponentProps) => {
     }
   };
 
-  // Call updateReservations when the view or date changes
-  useEffect(() => {
+  const pollReservations = () => {
     const { startDate, endDate } = getCurrentViewDateRange();
 
     // Set time to start of day for startDate and end of day for endDate
@@ -104,6 +103,20 @@ const CalendarComponent = (props: CalendarComponentProps) => {
     endTime.setHours(23, 59, 59, 999);
 
     props.updateReservations(startTime.toISOString(), endTime.toISOString());
+  };
+
+  // Call pollReservations when the view or date changes
+  useEffect(() => {
+    // Fetch immediately when view/date changes
+    pollReservations();
+
+    // Then set up polling every 30s
+    const interval = setInterval(() => {
+      pollReservations();
+    }, 30_000);
+
+    // Cleanup on unmount or when view/date changes
+    return () => clearInterval(interval);
   }, [currentDate, view]);
 
   const getDaysInMonth = (date: Date) => {
