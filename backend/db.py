@@ -10,7 +10,7 @@ load_dotenv()
 def get_db():
     db = getattr(g, "_database", None)
     if db is None:
-        DATABASE_CONNECTIONS_STRING = os.getenv(["DATABASE_CONNECTION_STRING"])
+        DATABASE_CONNECTIONS_STRING = os.getenv("DATABASE_CONNECTION_STRING")
         if not DATABASE_CONNECTIONS_STRING:
             print("DATABASE_CONNECTION_STRING not specified")
             return None
