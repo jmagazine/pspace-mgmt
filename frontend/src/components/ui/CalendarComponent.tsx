@@ -1,3 +1,4 @@
+import { toZonedTime } from "date-fns-tz";
 import { useState, useEffect } from "react";
 import {
   ChevronLeft,
@@ -227,20 +228,20 @@ const CalendarComponent = (props: CalendarComponentProps) => {
 
   // get all reservations for that date
   const getReservationsForDate = (date: Date) => {
+    const tz = "America/New_York";
     const filtered = props.reservations.filter((res) => {
-      // Handle different date formats - your backend returns without .000Z
       let dateTimeString = res.startTime;
       if (!dateTimeString.includes("Z") && !dateTimeString.includes("+")) {
         dateTimeString += "Z"; // Add UTC indicator if missing
       }
-
-      const resDate = new Date(dateTimeString);
-      const resDateFormatted = formatDate(resDate);
-      const targetDateFormatted = formatDate(date);
-
-      return resDateFormatted === targetDateFormatted;
+      // Convert UTC time to America/New_York for comparison
+      const resDateLocal = toZonedTime(new Date(dateTimeString), tz);
+      return (
+        resDateLocal.getFullYear() === date.getFullYear() &&
+        resDateLocal.getMonth() === date.getMonth() &&
+        resDateLocal.getDate() === date.getDate()
+      );
     });
-
     return filtered;
   };
 

@@ -7,8 +7,7 @@ from dotenv import load_dotenv
 
 class Config:
     def __init__(self, mode="DEVELOPMENT"):
-        load_dotenv(f".env.{mode.lower()}")
-        MODE = mode
+        load_dotenv(f"backend/.env.{mode.lower()}")
 
         # Database configuration
         self.DATABASE_CONNECTION_STRING = os.getenv("DATABASE_CONNECTION_STRING")
