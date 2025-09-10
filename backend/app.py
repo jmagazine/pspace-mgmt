@@ -20,4 +20,4 @@ app = create_app(mode)
 if __name__ == "__main__":
     config_obj = Config(mode)
     print(app.config)
-    app.run(debug=config_obj.DEBUG, host=config_obj.HOST, port=os.getenv("PORT", 5000))
+    app.run(debug=config_obj.DEBUG, host="0.0.0.0", port=os.getenv("PORT", 5000))
