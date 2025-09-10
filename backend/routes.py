@@ -16,10 +16,10 @@ def index():
 def dummy():
 
     dummy_data = {
-        "title": "Team Meeting Room A",
         "reserver": "John Smith",
-        "startDateTime": "2025-07-25T14:00:00Z",
-        "endDateTime": "2025-07-25T15:30:00Z",
+        "createdBy": "TEST",
+        "startTime": "2025-09-15T14:00:00Z",
+        "endTime": "2025-09-15T16:00:00Z",
     }
 
     try:
@@ -42,26 +42,23 @@ def reservations():
 
             # Store with consistent field names
             reservation_data = {
-                "startDateTime": new_reservation["startDateTime"],
-                "endDateTime": new_reservation["endDateTime"],
                 "reserver": new_reservation["reserver"],
                 "createdBy": new_reservation["createdBy"],
                 # Convert to datetime objects for MongoDB
-                "start_time": datetime.fromisoformat(
-                    new_reservation["startDateTime"].replace("Z", "+00:00")
+                "startTime": datetime.fromisoformat(
+                    new_reservation["startTime"].replace("Z", "+00:00")
                 ),
-                "end_time": datetime.fromisoformat(
-                    new_reservation["endDateTime"].replace("Z", "+00:00")
+                "endTime": datetime.fromisoformat(
+                    new_reservation["endTime"].replace("Z", "+00:00")
                 ),
             }
-
             result = reservations_col.insert_one(reservation_data)
 
             # Return the data as expected by frontend
             response_data = {
                 "_id": str(result.inserted_id),
-                "startDateTime": new_reservation["startDateTime"],
-                "endDateTime": new_reservation["endDateTime"],
+                "startTime": new_reservation["startTime"],
+                "endTime": new_reservation["endTime"],
                 "reserver": new_reservation["reserver"],
                 "createdBy": new_reservation["createdBy"],
             }
@@ -82,8 +79,8 @@ def reservations():
                 reservations = list(
                     reservations_col.find(
                         {
-                            "start_time": {"$gte": start_date},
-                            "end_time": {"$lte": end_date},
+                            "startTime": {"$gte": start_date},
+                            "endTime": {"$lte": end_date},
                         }
                     )
                 )
@@ -97,10 +94,8 @@ def reservations():
             for r in reservations:
                 r["_id"] = str(r["_id"])
                 # Ensure we return the string format expected by frontend
-                if "startDateTime" not in r and "start_time" in r:
-                    r["startDateTime"] = r["start_time"].isoformat()
-                if "endDateTime" not in r and "end_time" in r:
-                    r["endDateTime"] = r["end_time"].isoformat()
+                r["startTime"] = str(r["startTime"])
+                r["endTime"] = str(r["endTime"])
 
             return jsonify({"reservations": reservations}), 200
         elif request.method == "DELETE":
@@ -113,6 +108,11 @@ def reservations():
         return jsonify({"error": str(e)}), 400
 
 
+@api.route("/ping", methods=["GET"])
+def ping():
+    return "Ping message received!"
+
+
 @api.route("/reservations/<reservation_id>", methods=["PUT", "DELETE"])
 def reservation_detail(reservation_id):
     reservations_col = db["reservations"]
@@ -123,15 +123,15 @@ def reservation_detail(reservation_id):
 
             # Update with consistent field names
             backend_data = {
-                "startDateTime": update_data["startDateTime"],
-                "endDateTime": update_data["endDateTime"],
+                "startTime": update_data["startTime"],
+                "endTime": update_data["endTime"],
                 "reserver": update_data["reserver"],
                 "createdBy": update_data["createdBy"],
-                "start_time": datetime.fromisoformat(
-                    update_data["startDateTime"].replace("Z", "+00:00")
+                "startTime": datetime.fromisoformat(
+                    update_data["startTime"].replace("Z", "+00:00")
                 ),
-                "end_time": datetime.fromisoformat(
-                    update_data["endDateTime"].replace("Z", "+00:00")
+                "endTime": datetime.fromisoformat(
+                    update_data["endTime"].replace("Z", "+00:00")
                 ),
             }
 

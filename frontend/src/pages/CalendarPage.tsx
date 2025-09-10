@@ -9,28 +9,46 @@ const CalendarPage = () => {
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const { user, logout } = useAuth();
 
-  const updateReservations = async (
-    startDateTime: string,
-    endDateTime: string,
-  ) => {
+  const updateReservations = async (startTime: string, endTime: string) => {
+    // fetch reservations within interval
     const response = await fetch(
       `${
         import.meta.env.VITE_API_URL
-      }/api/reservations?start=${startDateTime}&end=${endDateTime}`,
+      }/api/reservations?start=${startTime}&end=${endTime}`,
     );
     const data = await response.json();
-    console.log(data);
 
-    // Sort reservations by start time
-    const sortedReservations = (data["reservations"] || []).sort(
-      (a: Reservation, b: Reservation) => {
-        const dateA = new Date(a.startDateTime);
-        const dateB = new Date(b.startDateTime);
-        return dateA.getTime() - dateB.getTime();
-      },
-    );
+    if (data["reservations"]) {
+      // Sort reservations by start time
+      const sortedReservations = data["reservations"].sort(
+        (a: Reservation, b: Reservation) => {
+          const dateA = new Date(a.startTime);
+          const dateB = new Date(b.startTime);
+          return dateA.getTime() - dateB.getTime();
+        },
+      );
 
-    setReservations(sortedReservations);
+      // Convert times to UTC-4 (Eastern) for display
+      const updatedReservations = sortedReservations.map(
+        (reservation: Reservation) => {
+          const start = new Date(reservation.startTime);
+          const end = new Date(reservation.endTime);
+
+          // shift from UTC → UTC-4 (subtract 4 hours)
+          const offsetMs = 4 * 60 * 60 * 1000;
+          const startUtc4 = new Date(start.getTime() - offsetMs);
+          const endUtc4 = new Date(end.getTime() - offsetMs);
+
+          return {
+            ...reservation,
+            startTime: startUtc4.toISOString(),
+            endTime: endUtc4.toISOString(),
+          };
+        },
+      );
+
+      setReservations(updatedReservations);
+    }
   };
 
   const handleLogout = async () => {

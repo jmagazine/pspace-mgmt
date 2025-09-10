@@ -6,6 +6,10 @@ from pymongo import MongoClient
 def get_db():
     db = getattr(g, "_database", None)
     if db is None:
+        DATABASE_CONNECTIONS_STRING = current_app.config["DATABASE_CONNECTION_STRING"]
+        if not DATABASE_CONNECTIONS_STRING:
+            print("DATABASE_CONNECTION_STRING not specified")
+            return None
         client = MongoClient(current_app.config["DATABASE_CONNECTION_STRING"])
 
         db = g._database = client["pspace-mgmt"]

@@ -7,18 +7,23 @@ config.read(os.path.join(os.path.dirname(__file__), "config.ini"))
 
 
 class Config:
-    # Database configuration
-    DATABASE_CONNECTION_STRING = config.get(
-        "DEFAULT", "DATABASE_CONNECTION_STRING", fallback="mongodb://localhost:27017/"
-    )
+    def __init__(self, mode="DEVELOPMENT"):
+        MODE = mode
 
-    # Flask configuration
-    DEBUG = config.getboolean("DEFAULT", "DEBUG", fallback=True)
-    SECRET_KEY = config.get("DEFAULT", "SECRET_KEY", fallback="dev-secret-key")
+        # Database configuration
+        self.DATABASE_CONNECTION_STRING = config.get(
+            MODE,
+            "DATABASE_CONNECTION_STRING",
+            fallback="mongodb://localhost:27017/",
+        )
 
-    # Server configuration
-    HOST = config.get("DEFAULT", "HOST", fallback="127.0.0.1")
-    PORT = config.getint("DEFAULT", "PORT", fallback=5000)
+        # Flask configuration
+        self.DEBUG = config.getboolean(MODE, "DEBUG", fallback=True)
+        self.SECRET_KEY = config.get(MODE, "SECRET_KEY", fallback="dev-secret-key")
 
-    # CORS configuration
-    CORS_ORIGINS = config.get("DEFAULT", "CORS_ORIGINS", fallback="*")
+        # Server configuration
+        self.HOST = config.get(MODE, "HOST", fallback="127.0.0.1")
+        self.PORT = config.getint(MODE, "PORT", fallback=5000)
+
+        # CORS configuration
+        self.CORS_ORIGINS = config.get(MODE, "CORS_ORIGINS", fallback="*")
