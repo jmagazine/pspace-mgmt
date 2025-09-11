@@ -92,8 +92,7 @@ const CalendarComponent = (props: CalendarComponentProps) => {
     }
   };
 
-  // Call updateReservations when the view or date changes
-  useEffect(() => {
+  const pollReservations = () => {
     const { startDate, endDate } = getCurrentViewDateRange();
 
     // Set time to start of day for startDate and end of day for endDate
@@ -104,6 +103,20 @@ const CalendarComponent = (props: CalendarComponentProps) => {
     endTime.setHours(23, 59, 59, 999);
 
     props.updateReservations(startTime.toISOString(), endTime.toISOString());
+  };
+
+  // Call pollReservations when the view or date changes
+  useEffect(() => {
+    // Fetch immediately when view/date changes
+    pollReservations();
+
+    // Then set up polling every 30s
+    const interval = setInterval(() => {
+      pollReservations();
+    }, 30_000);
+
+    // Cleanup on unmount or when view/date changes
+    return () => clearInterval(interval);
   }, [currentDate, view]);
 
   const getDaysInMonth = (date: Date) => {
@@ -320,18 +333,15 @@ const CalendarComponent = (props: CalendarComponentProps) => {
 
   // controls logic for when a reservation is clicked
   const handleReservationClick = (reservation: Reservation, date: Date) => {
-    const userField = reservation.createdBy || reservation.createdBy;
-    if (userField === currentUser) {
-      setSelectedDate(date);
-      setEditingReservation(reservation);
-      setFormData({
-        reserver: reservation.reserver || "",
-        startTime: getTimeFromISO(reservation.startTime),
-        endTime: getTimeFromISO(reservation.endTime),
-      });
-      setShowModal(true);
-      setFormError("");
-    }
+    setSelectedDate(date);
+    setEditingReservation(reservation);
+    setFormData({
+      reserver: reservation.reserver || "",
+      startTime: getTimeFromISO(reservation.startTime),
+      endTime: getTimeFromISO(reservation.endTime),
+    });
+    setShowModal(true);
+    setFormError("");
   };
 
   const formatTimeTo12Hour = (time24: string) => {
@@ -780,8 +790,13 @@ const CalendarComponent = (props: CalendarComponentProps) => {
           <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold text-gray-800">
-                {editingReservation ? "Edit Reservation" : "Make Reservation"} -{" "}
-                {selectedDate.toLocaleDateString()}
+                {editingReservation &&
+                editingReservation.createdBy === currentUser
+                  ? "Edit Reservation"
+                  : editingReservation
+                    ? "Reservation Details"
+                    : "Make Reservation"}{" "}
+                - {selectedDate.toLocaleDateString()}
               </h3>
               <button
                 onClick={() => {
@@ -804,13 +819,20 @@ const CalendarComponent = (props: CalendarComponentProps) => {
                   type="text"
                   value={formData.reserver}
                   onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      reserver: e.target.value,
-                    }))
+                    !editingReservation ||
+                    editingReservation.createdBy === currentUser
+                      ? setFormData((prev) => ({
+                          ...prev,
+                          reserver: e.target.value,
+                        }))
+                      : undefined
                   }
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Enter name or organization"
+                  disabled={
+                    !!editingReservation &&
+                    editingReservation.createdBy !== currentUser
+                  }
                 />
               </div>
 
@@ -824,12 +846,19 @@ const CalendarComponent = (props: CalendarComponentProps) => {
                     type="time"
                     value={formData.startTime}
                     onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        startTime: e.target.value,
-                      }))
+                      !editingReservation ||
+                      editingReservation.createdBy === currentUser
+                        ? setFormData((prev) => ({
+                            ...prev,
+                            startTime: e.target.value,
+                          }))
+                        : undefined
                     }
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    disabled={
+                      !!editingReservation &&
+                      editingReservation.createdBy !== currentUser
+                    }
                   />
                 </div>
 
@@ -841,12 +870,19 @@ const CalendarComponent = (props: CalendarComponentProps) => {
                     type="time"
                     value={formData.endTime}
                     onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        endTime: e.target.value,
-                      }))
+                      !editingReservation ||
+                      editingReservation.createdBy === currentUser
+                        ? setFormData((prev) => ({
+                            ...prev,
+                            endTime: e.target.value,
+                          }))
+                        : undefined
                     }
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    disabled={
+                      !!editingReservation &&
+                      editingReservation.createdBy !== currentUser
+                    }
                   />
                 </div>
               </div>
@@ -862,11 +898,18 @@ const CalendarComponent = (props: CalendarComponentProps) => {
                 <div>• Weekdays: 8:00 AM - 10:00 PM</div>
                 <div>• Weekends: 10:00 AM - 10:00 PM</div>
                 <div>• Maximum duration: 2 hours</div>
-                {editingReservation && (
-                  <div className="text-green-600 mt-1">
-                    • You can edit this reservation because you created it
-                  </div>
-                )}
+                {editingReservation &&
+                  editingReservation.createdBy === currentUser && (
+                    <div className="text-green-600 mt-1">
+                      • You can edit this reservation because you created it
+                    </div>
+                  )}
+                {editingReservation &&
+                  editingReservation.createdBy !== currentUser && (
+                    <div className="text-blue-600 mt-1">
+                      • You are viewing a reservation made by someone else
+                    </div>
+                  )}
               </div>
 
               <div className="flex space-x-3 pt-4">
@@ -878,26 +921,36 @@ const CalendarComponent = (props: CalendarComponentProps) => {
                   }}
                   className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
                 >
-                  Cancel
+                  Close
                 </button>
-                {editingReservation && (
+                {editingReservation &&
+                  editingReservation.createdBy === currentUser && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={handleDeleteReservation}
+                        className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+                      >
+                        Delete
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleFormSubmit}
+                        className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                      >
+                        Update Reservation
+                      </button>
+                    </>
+                  )}
+                {!editingReservation && (
                   <button
                     type="button"
-                    onClick={handleDeleteReservation}
-                    className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+                    onClick={handleFormSubmit}
+                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
                   >
-                    Delete
+                    Create Reservation
                   </button>
                 )}
-                <button
-                  type="button"
-                  onClick={handleFormSubmit}
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                >
-                  {editingReservation
-                    ? "Update Reservation"
-                    : "Create Reservation"}
-                </button>
               </div>
             </div>
           </div>

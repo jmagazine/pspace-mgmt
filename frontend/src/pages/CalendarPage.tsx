@@ -64,10 +64,19 @@ const CalendarPage = () => {
     <div>
       <div className="flex justify-between items-center p-4 bg-white border-b">
         <div className="flex items-center space-x-4">
-          <h1 className="text-xl font-semibold">
-            Welcome, {user?.displayName}
-          </h1>
-          <span className="text-sm text-gray-500">({user?.email})</span>
+          {user?.photoURL && (
+            <img
+              src={user.photoURL}
+              alt="User avatar"
+              className="w-10 h-10 rounded-full border border-gray-300 shadow-sm"
+            />
+          )}
+          <div className="flex flex-col">
+            <h1 className="text-xl font-semibold">
+              Welcome, {user?.displayName}
+            </h1>
+            <span className="text-sm text-gray-500">({user?.email})</span>
+          </div>
         </div>
         <Button
           onClick={handleLogout}
