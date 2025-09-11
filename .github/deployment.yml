@@ -36,6 +36,9 @@ jobs:
 
       - name: Deploy to GitHub Pages
         uses: actions/deploy-pages@v4
+    deploy:
+      environment:
+        name: github-pages
 
   backend:
     name: Deploy Backend to Heroku
@@ -61,3 +64,7 @@ jobs:
 
       - name: Push to Heroku main
         run: git push heroku main:main -f
+
+    deploy:
+      environment:
+        name: pspace-reservation-app
