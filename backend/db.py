@@ -1,16 +1,12 @@
 from flask import current_app, g
 from werkzeug.local import LocalProxy
 from pymongo import MongoClient
-import os
-from dotenv import load_dotenv
-
-load_dotenv()
 
 
 def get_db():
     db = getattr(g, "_database", None)
     if db is None:
-        DATABASE_CONNECTIONS_STRING = os.getenv("DATABASE_CONNECTION_STRING")
+        DATABASE_CONNECTIONS_STRING = current_app.config["DATABASE_CONNECTION_STRING"]
         if not DATABASE_CONNECTIONS_STRING:
             print("DATABASE_CONNECTION_STRING not specified")
             return None

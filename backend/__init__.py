@@ -3,11 +3,10 @@ from flask_cors import CORS
 from .config import Config
 
 
-def create_app(mode="DEVELOPMENT"):
+def create_app():
+    config_obj = Config()
     app = Flask(__name__)
     CORS(app)
-
-    config_obj = Config(mode)
     app.config.from_object(config_obj)
     app.debug = getattr(config_obj, "DEBUG", True)
 

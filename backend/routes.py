@@ -3,7 +3,6 @@ from flask import Blueprint, request, jsonify
 from .db import db
 from bson.objectid import ObjectId
 
-# Add the /api prefix to match frontend calls
 api = Blueprint("api", __name__, url_prefix="/api")
 
 

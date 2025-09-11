@@ -1,1 +1,1 @@
-web: python -m backend.app PRODUCTION
+web: gunicorn backend:app 
