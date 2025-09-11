@@ -12,26 +12,6 @@ def index():
     return "Welcome to the Reservation System"
 
 
-@api.route("/dummy", methods=["post"])
-def dummy():
-
-    dummy_data = {
-        "reserver": "John Smith",
-        "createdBy": "TEST",
-        "startTime": "2025-09-15T14:00:00Z",
-        "endTime": "2025-09-15T16:00:00Z",
-    }
-
-    try:
-        result = db["reservations"].insert_one(dummy_data)
-        return (
-            jsonify({"message": "Dummy data created", "id": str(result.inserted_id)}),
-            201,
-        )
-    except Exception as e:
-        return jsonify({"error": str(e)}), 400
-
-
 @api.route("/reservations", methods=["GET", "POST", "DELETE"])
 def reservations():
     reservations_col = db["reservations"]
