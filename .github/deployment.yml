@@ -6,6 +6,7 @@ on:
       - main 
 
 jobs:
+  jobs:
   frontend:
     name: Deploy Frontend to GitHub Pages
     runs-on: ubuntu-latest
