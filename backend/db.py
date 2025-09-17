@@ -12,7 +12,11 @@ def get_db():
             return None
         client = MongoClient(DATABASE_CONNECTIONS_STRING)
 
-        db = g._database = client["pspace-mgmt"]
+        DB_NAME = current_app.config["DB_NAME"]
+        if not DB_NAME:
+            print("DB_NAME not specified")
+            return None
+        db = g._database = client[DB_NAME]
     return db
 
 

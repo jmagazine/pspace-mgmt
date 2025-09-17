@@ -1,13 +1,13 @@
 import os
-from dotenv import load_dotenv
 
 
 class Config:
     def __init__(self):
-        load_dotenv()
 
         # Database configuration
         self.DATABASE_CONNECTION_STRING = os.getenv("DATABASE_CONNECTION_STRING")
+
+        self.DB_NAME = os.getenv("DB_NAME")
 
         # Flask configuration
         self.DEBUG = os.getenv("DEBUG", "True").lower() in ("true", "1", "yes")

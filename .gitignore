@@ -3,3 +3,8 @@ venv
 config.ini
 
 __pycache__/
+
+backend/credentials.json
+backend/token.json
+
+backend/service_account.json
