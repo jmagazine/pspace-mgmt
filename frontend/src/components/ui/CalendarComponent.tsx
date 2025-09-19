@@ -725,11 +725,21 @@ const CalendarComponent = (props: CalendarComponentProps) => {
   return (
     <div className="max-w-6xl mx-auto p-6 bg-white min-h-screen">
       <div className="flex justify-between items-center mb-6">
-        <div className="flex items-center space-x-4">
-          <h1 className="text-2xl font-bold text-gray-800 flex items-center">
-            <Calendar className="mr-2" size={24} />
-            Reservation Calendar
-          </h1>
+        <div className="flex flex-col items-start space-y-2">
+          <div className="flex items-center space-x-4">
+            <h1 className="text-2xl font-bold text-gray-800 flex items-center">
+              <Calendar className="mr-2" size={24} />
+              Reservation Calendar
+            </h1>
+          </div>
+          <a
+            href="https://calendar.google.com/calendar/u/1?cid=Y19lMTVjMjI5MWUzNzM1YjAwMWViMGU5ZjNhZDZhZGM0YmMwZGU2YWViNjljYTFiMzIxZmE2ZmJjYzEwYjUyZGIyQGdyb3VwLmNhbGVuZGFyLmdvb2dsZS5jb20"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 hover:underline text-sm font-medium cursor-pointer"
+          >
+            Subscribe to the Google Calendar
+          </a>
           <div className="flex bg-gray-100 rounded-lg p-1">
             <button
               onClick={() => setView("monthly")}

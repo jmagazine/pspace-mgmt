@@ -4,6 +4,10 @@ import os
 class Config:
     def __init__(self):
 
+        from dotenv import load_dotenv
+
+        load_dotenv(f'backend/.env.{os.getenv("FLASK_ENV")}')
+
         # Database configuration
         self.DATABASE_CONNECTION_STRING = os.getenv("DATABASE_CONNECTION_STRING")
 

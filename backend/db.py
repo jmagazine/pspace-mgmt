@@ -6,11 +6,11 @@ from pymongo import MongoClient
 def get_db():
     db = getattr(g, "_database", None)
     if db is None:
-        DATABASE_CONNECTIONS_STRING = current_app.config["DATABASE_CONNECTION_STRING"]
-        if not DATABASE_CONNECTIONS_STRING:
+        DATABASE_CONNECTION_STRING = current_app.config["DATABASE_CONNECTION_STRING"]
+        if not DATABASE_CONNECTION_STRING:
             print("DATABASE_CONNECTION_STRING not specified")
             return None
-        client = MongoClient(DATABASE_CONNECTIONS_STRING)
+        client = MongoClient(DATABASE_CONNECTION_STRING)
 
         DB_NAME = current_app.config["DB_NAME"]
         if not DB_NAME:

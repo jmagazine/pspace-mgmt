@@ -3,7 +3,13 @@ import os.path
 
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
+from pymongo import MongoClient
+
+# from db import db
 from googleapiclient.errors import HttpError
+from dotenv import load_dotenv
+
+load_dotenv("backend/.env.production")
 
 GOOGLE_CALENDAR_ID = os.getenv("GOOGLE_CALENDAR_ID")
 if not os.path.exists("backend/service_account.json"):
@@ -113,6 +119,85 @@ def update_event_in_calendar(
         return None
 
 
+def event_exists_in_calendar(
+    title: str, start_time_utc: str, end_time_utc: str
+) -> bool:
+    """
+    Checks if an event with the given title, start time, and end time exists in the Google Calendar.
+    :param title: Event title/summary
+    :param start_time_utc: Start time as ISO 8601 string (UTC)
+    :param end_time_utc: End time as ISO 8601 string (UTC)
+    :return: True if such an event exists, False otherwise
+    """
+    try:
+        events_result = (
+            service.events()
+            .list(
+                calendarId=GOOGLE_CALENDAR_ID,
+                timeMin=start_time_utc,
+                timeMax=end_time_utc,
+                singleEvents=True,
+                orderBy="startTime",
+                maxResults=2500,
+            )
+            .execute()
+        )
+        events = events_result.get("items", [])
+        for event in events:
+            event_title = event.get("summary", "")
+            event_start = event["start"].get("dateTime", event["start"].get("date"))
+            event_end = event["end"].get("dateTime", event["end"].get("date"))
+            if (
+                event_title == title
+                and event_start == start_time_utc
+                and event_end == end_time_utc
+            ):
+                return True
+        return False
+    except HttpError as error:
+        print(f"An error occurred while checking event existence: {error}")
+        return False
+
+
+def sync_reservations_to_calendar(db):
+    reservations = list(db["reservations"].find({}))
+    for res in reservations:
+        title = res.get("reserver")
+        start_dt = res.get("startTime")  # datetime object in UTC
+        end_dt = res.get("endTime")  # datetime object in UTC
+
+        # Convert datetime to ISO8601 string in UTC
+        start_iso = (
+            start_dt.isoformat().replace("+00:00", "Z")
+            if start_dt.tzinfo
+            else start_dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+        )
+        end_iso = (
+            end_dt.isoformat().replace("+00:00", "Z")
+            if end_dt.tzinfo
+            else end_dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+        )
+
+        if not event_exists_in_calendar(title, start_iso, end_iso):
+            # Add event to calendar
+            event = {
+                "summary": title,
+                "start": {"dateTime": start_iso, "timeZone": "UTC"},
+                "end": {"dateTime": end_iso, "timeZone": "UTC"},
+            }
+            try:
+                service.events().insert(
+                    calendarId=GOOGLE_CALENDAR_ID, body=event
+                ).execute()
+                print(f"Added event for reservation: {title} {start_iso} - {end_iso}")
+            except Exception as e:
+                print(f"Failed to add event for {title}: {e}")
+        else:
+            print(
+                f"Event already exists for reservation: {title} {start_iso} - {end_iso}"
+            )
+
+
 def delete_all_events_from_calendar():
     """
     Deletes all events from the Google Calendar specified by GOOGLE_CALENDAR_ID.
@@ -174,5 +259,9 @@ def main():
 
 
 if __name__ == "__main__":
+    # DATABASE_CONNECTION_STRING = os.getenv("DATABASE_CONNECTION_STRING")
+    # client = MongoClient(DATABASE_CONNECTION_STRING)
+    # db = client["pspace-mgmt"]
+    # sync_reservations_to_calendar(db)
     main()
     # delete_all_events_from_calendar()
