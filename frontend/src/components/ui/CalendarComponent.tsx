@@ -174,9 +174,10 @@ const CalendarComponent = (props: CalendarComponentProps) => {
   const getTimeFromISOAs12Hour = (isoString: string) => {
     const time24 = getTimeFromISO(isoString);
     const [hour, minutes] = time24.split(":");
+    const hourNum = parseInt(hour);
     // Daylight savings fix
-    const ampm = hour >= 12 ? "PM" : "AM";
-    const hour12 = hour % 12 || 12;
+    const ampm = hourNum >= 12 ? "PM" : "AM";
+    const hour12 = hourNum % 12 || 12;
     return `${hour12}:${minutes} ${ampm}`;
   };
 
