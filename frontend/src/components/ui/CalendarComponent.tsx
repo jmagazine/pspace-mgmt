@@ -162,13 +162,19 @@ const CalendarComponent = (props: CalendarComponentProps) => {
   };
 
   const getTimeFromISO = (isoString: string) => {
-    return new Date(isoString).toTimeString().slice(0, 5);
+    let time = new Date(isoString).toTimeString().slice(0, 5);
+    let [hours, minutes] = time.split(":");
+    // daylight savings
+    hours = (parseInt(hours) - 1).toString().padStart(2, "0");
+    time = `${hours}:${minutes}`;
+    console.log("Converted time:", time);
+    return time;
   };
 
   const getTimeFromISOAs12Hour = (isoString: string) => {
     const time24 = getTimeFromISO(isoString);
-    const [hours, minutes] = time24.split(":");
-    const hour = parseInt(hours, 10);
+    const [hour, minutes] = time24.split(":");
+    // Daylight savings fix
     const ampm = hour >= 12 ? "PM" : "AM";
     const hour12 = hour % 12 || 12;
     return `${hour12}:${minutes} ${ampm}`;
