@@ -14,6 +14,4 @@ def create_app():
     from .routes import api
 
     app.register_blueprint(api)
-    print(app.config)
-
     return app

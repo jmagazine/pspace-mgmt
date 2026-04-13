@@ -1,4 +1,4 @@
-import { toZonedTime } from "date-fns-tz";
+import { format, toZonedTime } from "date-fns-tz";
 import { useState, useEffect } from "react";
 import {
   ChevronLeft,
@@ -161,24 +161,26 @@ const CalendarComponent = (props: CalendarComponentProps) => {
     return new Date(`${dateStr}T${time}:00`).toISOString();
   };
 
+  const localTimeZone = "America/New_York";
+
+  const normalizeIsoString = (isoString: string) => {
+    let normalized = isoString;
+    if (!normalized.includes("Z") && !normalized.includes("+")) {
+      normalized += "Z";
+    }
+    return normalized;
+  };
+
   const getTimeFromISO = (isoString: string) => {
-    let time = new Date(isoString).toTimeString().slice(0, 5);
-    let [hours, minutes] = time.split(":");
-    // daylight savings
-    hours = (parseInt(hours) - 1).toString().padStart(2, "0");
-    time = `${hours}:${minutes}`;
-    console.log("Converted time:", time);
-    return time;
+    const dateTimeString = normalizeIsoString(isoString);
+    const zoned = toZonedTime(new Date(dateTimeString), localTimeZone);
+    return format(zoned, "HH:mm", { timeZone: localTimeZone });
   };
 
   const getTimeFromISOAs12Hour = (isoString: string) => {
-    const time24 = getTimeFromISO(isoString);
-    const [hour, minutes] = time24.split(":");
-    const hourNum = parseInt(hour);
-    // Daylight savings fix
-    const ampm = hourNum >= 12 ? "PM" : "AM";
-    const hour12 = hourNum % 12 || 12;
-    return `${hour12}:${minutes} ${ampm}`;
+    const dateTimeString = normalizeIsoString(isoString);
+    const zoned = toZonedTime(new Date(dateTimeString), localTimeZone);
+    return format(zoned, "h:mm a", { timeZone: localTimeZone });
   };
 
   // formats a date to a utc string
@@ -221,24 +223,20 @@ const CalendarComponent = (props: CalendarComponentProps) => {
     endTime: string,
     excludeId?: string,
   ) => {
-    startTime = createDateTimeISO(date, startTime);
-    endTime = createDateTimeISO(date, endTime);
+    const startDateTime = new Date(createDateTimeISO(date, startTime));
+    const endDateTime = new Date(createDateTimeISO(date, endTime));
 
     const dayReservations = props.reservations.filter((res) => {
-      // Handle different date formats - your backend returns without .000Z
-      let dateTimeString = res.startTime;
-      if (!dateTimeString.includes("Z") && !dateTimeString.includes("+")) {
-        dateTimeString += "Z"; // Add UTC indicator if missing
-      }
+      let dateTimeString = normalizeIsoString(res.startTime);
       const resDate = new Date(dateTimeString);
       return formatDate(resDate) === formatDate(date) && res._id !== excludeId;
     });
 
     for (const reservation of dayReservations) {
-      const existingStart = reservation.startTime;
-      const existingEnd = reservation.endTime;
+      const existingStart = new Date(normalizeIsoString(reservation.startTime));
+      const existingEnd = new Date(normalizeIsoString(reservation.endTime));
 
-      if (startTime < existingEnd && endTime > existingStart) {
+      if (startDateTime < existingEnd && endDateTime > existingStart) {
         return true;
       }
     }
@@ -267,13 +265,10 @@ const CalendarComponent = (props: CalendarComponentProps) => {
 
   const getUserReservationsForDate = (date: Date, userId: string) => {
     return props.reservations.filter((res) => {
-      let dateTimeString = res.startTime;
-      if (!dateTimeString.includes("Z") && !dateTimeString.includes("+")) {
-        dateTimeString += "Z";
-      }
-      const resDate = new Date(dateTimeString);
+      const dateTimeString = normalizeIsoString(res.startTime);
+      const resDateLocal = toZonedTime(new Date(dateTimeString), localTimeZone);
       return (
-        formatDate(resDate) === formatDate(date) &&
+        formatDate(resDateLocal) === formatDate(date) &&
         (res.createdBy || res.createdBy) === userId
       );
     });
@@ -290,14 +285,11 @@ const CalendarComponent = (props: CalendarComponentProps) => {
     endOfWeek.setHours(23, 59, 59, 999);
 
     return props.reservations.filter((res) => {
-      let dateTimeString = res.startTime;
-      if (!dateTimeString.includes("Z") && !dateTimeString.includes("+")) {
-        dateTimeString += "Z";
-      }
-      const resDate = new Date(dateTimeString);
+      const dateTimeString = normalizeIsoString(res.startTime);
+      const resDateLocal = toZonedTime(new Date(dateTimeString), localTimeZone);
       return (
-        resDate >= startOfWeek &&
-        resDate <= endOfWeek &&
+        resDateLocal >= startOfWeek &&
+        resDateLocal <= endOfWeek &&
         (res.createdBy || res.createdBy) === userId
       );
     });
