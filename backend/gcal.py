@@ -259,9 +259,9 @@ def main():
 
 
 if __name__ == "__main__":
-    DATABASE_CONNECTION_STRING = os.getenv("DATABASE_CONNECTION_STRING")
-    client = MongoClient(DATABASE_CONNECTION_STRING)
-    db = client["pspace-mgmt"]
-    sync_reservations_to_calendar(db)
-    # main()
+    # DATABASE_CONNECTION_STRING = os.getenv("DATABASE_CONNECTION_STRING")
+    # client = MongoClient(DATABASE_CONNECTION_STRING)
+    # db = client["pspace-mgmt"]
+    # sync_reservations_to_calendar(db)
+    main()
     # delete_all_events_from_calendar()

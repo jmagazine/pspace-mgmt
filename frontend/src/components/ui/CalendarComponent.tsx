@@ -599,20 +599,19 @@ const CalendarComponent = (props: CalendarComponentProps) => {
     const days = getDaysInMonth(currentDate);
 
     return (
-      <div className="grid grid-cols-7 gap-0.5 sm:gap-1">
+      <div className="grid grid-cols-7 gap-1">
         {dayNames.map((day) => (
           <div
             key={day}
-            className="p-1 sm:p-2 text-center font-semibold text-gray-600 bg-gray-100 text-xs sm:text-sm"
+            className="p-2 text-center font-semibold text-gray-600 bg-gray-100"
           >
-            <span className="hidden sm:inline">{day}</span>
-            <span className="sm:hidden">{day.substring(0, 1)}</span>
+            {day}
           </div>
         ))}
         {days.map((date, index) => (
           <div
             key={index}
-            className={`min-h-16 sm:min-h-24 p-1 sm:p-2 border cursor-pointer hover:bg-blue-50 transition-colors ${
+            className={`min-h-24 p-2 border cursor-pointer hover:bg-blue-50 transition-colors ${
               date
                 ? isToday(date)
                   ? "bg-green-100 border-green-400 border-2"
@@ -624,13 +623,13 @@ const CalendarComponent = (props: CalendarComponentProps) => {
             {date && (
               <>
                 <div
-                  className={`font-medium text-xs sm:text-sm mb-1 ${
+                  className={`font-medium text-sm mb-1 ${
                     isToday(date) ? "text-green-800" : ""
                   }`}
                 >
                   {date.getDate()}
                 </div>
-                <div className="space-y-0.5 sm:space-y-1">
+                <div className="space-y-1">
                   {getReservationsForDate(date)
                     .slice(0, 2)
                     .map((reservation) => (
@@ -653,18 +652,8 @@ const CalendarComponent = (props: CalendarComponentProps) => {
                             : "Reserved by someone else"
                         }
                       >
-                        <span className="hidden sm:inline">
-                          {getTimeFromISOAs12Hour(reservation.startTime)} -{" "}
-                          {reservation.reserver}
-                        </span>
-                        <span className="sm:hidden">
-                          {
-                            getTimeFromISOAs12Hour(reservation.startTime).split(
-                              " ",
-                            )[0]
-                          }{" "}
-                          {(reservation.reserver || "").substring(0, 8)}
-                        </span>
+                        {getTimeFromISOAs12Hour(reservation.startTime)} -{" "}
+                        {reservation.reserver}
                       </div>
                     ))}
                   {getReservationsForDate(date).length > 2 && (
@@ -685,35 +674,30 @@ const CalendarComponent = (props: CalendarComponentProps) => {
     const weekDays = getWeekDays(currentDate);
 
     return (
-      <div className="grid grid-cols-7 gap-0.5 sm:gap-1">
+      <div className="grid grid-cols-7 gap-1">
         {weekDays.map((date, index) => (
           <div key={index} className="flex flex-col">
             <div
-              className={`p-1 sm:p-3 text-center font-semibold border-b-2 ${
+              className={`p-3 text-center font-semibold border-b-2 ${
                 isToday(date)
                   ? "bg-green-100 border-green-400 text-green-800"
                   : "bg-gray-100 border-gray-200"
               }`}
             >
-              <div className="text-xs sm:text-sm text-gray-600">
-                <span className="hidden sm:inline">
-                  {dayNames[date.getDay()]}
-                </span>
-                <span className="sm:hidden">
-                  {dayNames[date.getDay()].substring(0, 1)}
-                </span>
+              <div className="text-sm text-gray-600">
+                {dayNames[date.getDay()]}
               </div>
-              <div className="text-sm sm:text-lg">{date.getDate()}</div>
+              <div className="text-lg">{date.getDate()}</div>
             </div>
             <div
-              className="min-h-32 sm:min-h-96 p-1 sm:p-2 border border-gray-200 cursor-pointer hover:bg-blue-50 transition-colors bg-white"
+              className="min-h-96 p-2 border border-gray-200 cursor-pointer hover:bg-blue-50 transition-colors bg-white"
               onClick={() => handleDateClick(date)}
             >
-              <div className="space-y-1 sm:space-y-2">
+              <div className="space-y-2">
                 {getReservationsForDate(date).map((reservation) => (
                   <div
                     key={reservation._id || reservation._id}
-                    className={`text-xs px-1 sm:px-2 py-0.5 sm:py-1 rounded cursor-pointer transition-colors ${
+                    className={`text-xs px-2 py-1 rounded cursor-pointer transition-colors ${
                       (reservation.createdBy || reservation.createdBy) ===
                       currentUser
                         ? "bg-green-200 text-green-800 hover:bg-green-300"
@@ -730,27 +714,11 @@ const CalendarComponent = (props: CalendarComponentProps) => {
                         : "Reserved by someone else"
                     }
                   >
-                    <div className="font-medium text-xs">
-                      <span className="hidden sm:inline">
-                        {getTimeFromISOAs12Hour(reservation.startTime)} -{" "}
-                        {getTimeFromISOAs12Hour(reservation.endTime)}
-                      </span>
-                      <span className="sm:hidden">
-                        {
-                          getTimeFromISOAs12Hour(reservation.startTime).split(
-                            " ",
-                          )[0]
-                        }
-                      </span>
+                    <div className="font-medium">
+                      {getTimeFromISOAs12Hour(reservation.startTime)} -{" "}
+                      {getTimeFromISOAs12Hour(reservation.endTime)}
                     </div>
-                    <div className="truncate text-xs">
-                      <span className="hidden sm:inline">
-                        {reservation.reserver}
-                      </span>
-                      <span className="sm:hidden">
-                        {(reservation.reserver || "").substring(0, 6)}
-                      </span>
-                    </div>
+                    <div className="truncate">{reservation.reserver}</div>
                   </div>
                 ))}
               </div>
@@ -762,28 +730,27 @@ const CalendarComponent = (props: CalendarComponentProps) => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto p-3 sm:p-6 bg-white min-h-screen">
-      <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center mb-4 sm:mb-6 space-y-4 lg:space-y-0">
+    <div className="max-w-6xl mx-auto p-6 bg-white min-h-screen">
+      <div className="flex justify-between items-center mb-6">
         <div className="flex flex-col items-start space-y-2">
-          <div className="flex items-center space-x-2 sm:space-x-4">
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-800 flex items-center">
-              <Calendar className="mr-1 sm:mr-2" size={20} />
-              <span className="hidden sm:inline">Reservation Calendar</span>
-              <span className="sm:hidden">Calendar</span>
+          <div className="flex items-center space-x-4">
+            <h1 className="text-2xl font-bold text-gray-800 flex items-center">
+              <Calendar className="mr-2" size={24} />
+              Reservation Calendar
             </h1>
           </div>
           <a
             href="https://calendar.google.com/calendar/u/1?cid=Y19lMTVjMjI5MWUzNzM1YjAwMWViMGU5ZjNhZDZhZGM0YmMwZGU2YWViNjljYTFiMzIxZmE2ZmJjYzEwYjUyZGIyQGdyb3VwLmNhbGVuZGFyLmdvb2dsZS5jb20"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-blue-600 hover:underline text-xs sm:text-sm font-medium cursor-pointer"
+            className="text-blue-600 hover:underline text-sm font-medium cursor-pointer"
           >
-            Subscribe to Google Calendar
+            Subscribe to the Google Calendar
           </a>
           <div className="flex bg-gray-100 rounded-lg p-1">
             <button
               onClick={() => setView("monthly")}
-              className={`px-2 sm:px-3 py-1 rounded text-xs sm:text-sm font-medium transition-colors ${
+              className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
                 view === "monthly"
                   ? "bg-white text-gray-900 shadow"
                   : "text-gray-600 hover:text-gray-900"
@@ -793,7 +760,7 @@ const CalendarComponent = (props: CalendarComponentProps) => {
             </button>
             <button
               onClick={() => setView("weekly")}
-              className={`px-2 sm:px-3 py-1 rounded text-xs sm:text-sm font-medium transition-colors ${
+              className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
                 view === "weekly"
                   ? "bg-white text-gray-900 shadow"
                   : "text-gray-600 hover:text-gray-900"
@@ -804,16 +771,16 @@ const CalendarComponent = (props: CalendarComponentProps) => {
           </div>
         </div>
 
-        <div className="flex items-center justify-center lg:justify-start space-x-2 sm:space-x-4 w-full lg:w-auto">
+        <div className="flex items-center space-x-4">
           <button
             onClick={() =>
               view === "monthly" ? navigateMonth("prev") : navigateWeek("prev")
             }
-            className="p-1.5 sm:p-2 rounded-lg hover:bg-gray-100 transition-colors"
+            className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
           >
-            <ChevronLeft size={18} className="sm:w-5 sm:h-5" />
+            <ChevronLeft size={20} />
           </button>
-          <h2 className="text-base sm:text-xl font-semibold text-gray-700 min-w-32 sm:min-w-48 text-center flex-1 lg:flex-none">
+          <h2 className="text-xl font-semibold text-gray-700 min-w-48 text-center">
             {view === "monthly"
               ? `${
                   monthNames[currentDate.getMonth()]
@@ -824,9 +791,9 @@ const CalendarComponent = (props: CalendarComponentProps) => {
             onClick={() =>
               view === "monthly" ? navigateMonth("next") : navigateWeek("next")
             }
-            className="p-1.5 sm:p-2 rounded-lg hover:bg-gray-100 transition-colors"
+            className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
           >
-            <ChevronRight size={18} className="sm:w-5 sm:h-5" />
+            <ChevronRight size={20} />
           </button>
         </div>
       </div>
@@ -836,28 +803,26 @@ const CalendarComponent = (props: CalendarComponentProps) => {
       </div>
 
       {showModal && selectedDate && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-4 sm:p-6 w-full max-w-md mx-2 sm:mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-base sm:text-lg font-semibold text-gray-800 pr-2">
+              <h3 className="text-lg font-semibold text-gray-800">
                 {editingReservation &&
                 editingReservation.createdBy === currentUser
                   ? "Edit Reservation"
                   : editingReservation
                     ? "Reservation Details"
                     : "Make Reservation"}{" "}
-                <span className="block sm:inline text-sm sm:text-base text-gray-600">
-                  {selectedDate.toLocaleDateString()}
-                </span>
+                - {selectedDate.toLocaleDateString()}
               </h3>
               <button
                 onClick={() => {
                   setShowModal(false);
                   setEditingReservation(null);
                 }}
-                className="text-gray-500 hover:text-gray-700 p-1"
+                className="text-gray-500 hover:text-gray-700"
               >
-                <X size={18} className="sm:w-5 sm:h-5" />
+                <X size={20} />
               </button>
             </div>
 
@@ -888,10 +853,10 @@ const CalendarComponent = (props: CalendarComponentProps) => {
                 />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    <Clock size={14} className="inline mr-1" />
+                    <Clock size={16} className="inline mr-1" />
                     Start Time
                   </label>
                   <input
@@ -964,14 +929,14 @@ const CalendarComponent = (props: CalendarComponentProps) => {
                   )}
               </div>
 
-              <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3 pt-4">
+              <div className="flex space-x-3 pt-4">
                 <button
                   type="button"
                   onClick={() => {
                     setShowModal(false);
                     setEditingReservation(null);
                   }}
-                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors text-sm sm:text-base"
+                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
                 >
                   Close
                 </button>
@@ -981,14 +946,14 @@ const CalendarComponent = (props: CalendarComponentProps) => {
                       <button
                         type="button"
                         onClick={handleDeleteReservation}
-                        className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors text-sm sm:text-base"
+                        className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
                       >
                         Delete
                       </button>
                       <button
                         type="button"
                         onClick={handleFormSubmit}
-                        className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm sm:text-base"
+                        className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
                       >
                         Update Reservation
                       </button>
@@ -998,7 +963,7 @@ const CalendarComponent = (props: CalendarComponentProps) => {
                   <button
                     type="button"
                     onClick={handleFormSubmit}
-                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm sm:text-base"
+                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
                   >
                     Create Reservation
                   </button>
